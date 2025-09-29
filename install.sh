@@ -2,7 +2,6 @@
 set -euo pipefail
 
 REPO="${REPO:-dhruvmistry2000/iso-downloader}"
-BIN_DIR="${BIN_DIR:-/usr/local/bin}"
 NAME="iso-downloader"
 
 command -v curl >/dev/null 2>&1 || { echo "curl is required"; exit 1; }
@@ -22,14 +21,12 @@ echo "Downloading $NAME..."
 curl -fsSL "$ASSET_URL" -o "$TMP_DIR/$NAME"
 chmod +x "$TMP_DIR/$NAME"
 
-echo "Installing to $BIN_DIR (sudo may be required)..."
-if [ ! -w "$BIN_DIR" ]; then
-  sudo mkdir -p "$BIN_DIR"
-  sudo cp "$TMP_DIR/$NAME" "$BIN_DIR/$NAME"
-else
-  mkdir -p "$BIN_DIR"
-  cp "$TMP_DIR/$NAME" "$BIN_DIR/$NAME"
-fi
+# Download the latest distros.json from the GitHub repository
+DISTROS_URL="https://raw.githubusercontent.com/${REPO}/main/data/distros.json"
+DISTROS_PATH="$TMP_DIR/distros.json"
+echo "Fetching distros.json..."
+curl -fsSL "$DISTROS_URL" -o "$DISTROS_PATH"
 
-echo "Installed: $(command -v $NAME)"
-"$BIN_DIR/$NAME" --help || true
+# Run the binary with the config file from GitHub
+echo "Running $NAME with config from GitHub..."
+ISO_DOWNLOADER_CONFIG="$DISTROS_PATH" "$TMP_DIR/$NAME"
