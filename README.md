@@ -1,70 +1,65 @@
-## iso-downloader
+## iso-downloader (Go)
 
-CLI/TUI tool to download Linux ISOs by distro and version.
+CLI/TUI to quickly download Linux ISOs, organized by distro family → distro → versions.
 
-### Install (one-liner)
+### Features
+
+- Select family → distro → versions via interactive prompts
+- Directory picker: uses `yazi --chooser-dir` if available, else simple prompt
+- Organized downloads: `downloads/<distro>/<filename>.iso`
+- Config is fetched from GitHub JSON on every run (no local config required)
+- Supports Debian family (Debian, Ubuntu), Fedora, Arch (extensible)
+
+### Run (no install)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/start.sh | bash
 ```
 
-Set `REPO=<owner>/<repo>` to install from your fork:
+Use a different repo fork:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/start.sh | REPO=<owner>/<repo> bash
 ```
 
-### Usage
+### How it works
 
-Interactive TUI:
+- The app fetches `data/distros.json` from the repo at runtime by default.
+- Override with `ISO_DOWNLOADER_CONFIG` to point to a different JSON URL.
+- For distros with dynamic filenames, it lists directory contents and matches a glob.
 
-```bash
-iso-downloader
-```
-
-Non-interactive:
+### Build locally
 
 ```bash
-iso-downloader --non-interactive --distro ubuntu --versions 24.04,22.04 --output ./downloads
-iso-downloader --non-interactive --distro ubuntu --versions all
+bash scripts/build_run.sh
 ```
 
-### Config
+This builds `dist/iso-downloader` and runs it.
 
-TOML config is bundled at `iso_downloader/data/distros.toml`. You can override with `--config` or `ISO_DOWNLOADER_CONFIG`.
+### JSON schema (simplified)
 
-Schema:
-
-```toml
-[distros.<key>]
-base_url = "..."                  # optional
-url_template = "...{version}..."  # required
-filename_template = "...{version}.iso"  # optional
-versions = ["<version>", ...]
+```json
+{
+  "families": {
+    "debian": {
+      "distros": {
+        "debian": { "base_url": "...", "list_url_template": "...", "filename_glob": "...", "versions": ["..."] },
+        "ubuntu": { "base_url": "...", "url_template": "...", "filename_template": "...", "versions": ["..."] }
+      }
+    },
+    "fedora": { "distros": { "fedora": { "base_url": "...", "list_url_template": "...", "filename_glob": "...", "versions": ["..."] } } },
+    "arch":   { "distros": { "arch":   { "base_url": "...", "list_url_template": "...", "filename_glob": "...", "versions": ["..."] } } }
+  }
+}
 ```
 
-### Develop
+### Contributing
 
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-pip install -e .
-iso-downloader --help
-```
+- Add more distros/variants to `data/distros.json`
+- Improve UX, error handling, and docs
+- Ideas welcome: checksum verification, resume, mirrors, arches, etc.
 
-### Build single binary
+### Motivation
 
-```bash
-bash scripts/build.pyinstaller.sh
-ls -l dist/iso-downloader
-```
-
-### Release via GitHub Actions
-
-Tag a release:
-
-```bash
-git tag v0.1.0 && git push origin v0.1.0
-```
-
+This project was started to streamline frequent ISO downloads for Linux demos and first looks. It’s open source and community-driven—contributions are appreciated.
 
