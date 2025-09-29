@@ -1,0 +1,40 @@
+name: release-go
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+      - name: Build
+        run: |
+          go build -o dist/iso-downloader ./cmd/iso-downloader
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iso-downloader-go-linux
+          path: dist/iso-downloader
+
+  release:
+    needs: [build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: iso-downloader-go-linux
+          path: dist
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/iso-downloader
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+

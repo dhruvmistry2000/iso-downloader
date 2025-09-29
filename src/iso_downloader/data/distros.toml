@@ -1,0 +1,21 @@
+[distros]
+
+[distros.ubuntu]
+base_url = "https://releases.ubuntu.com"
+url_template = "{base_url}/{version}/ubuntu-{version}-desktop-amd64.iso"
+filename_template = "ubuntu-{version}-desktop-amd64.iso"
+versions = ["24.04.1", "24.04", "22.04.5", "22.04.4"]
+
+[distros.debian]
+base_url = "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd"
+url_template = "{base_url}/debian-{version}-amd64-netinst.iso"
+filename_template = "debian-{version}-amd64-netinst.iso"
+versions = ["12.7.0", "12.6.0", "12.5.0"]
+
+[distros.fedora]
+base_url = "https://download.fedoraproject.org/pub/fedora/linux/releases"
+list_url_template = "{base_url}/{version}/Workstation/x86_64/iso/"
+filename_glob = "Fedora-Workstation-Live-x86_64-{version}-*.iso"
+versions = ["41", "40", "39"]
+
+

@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/iso_downloader/__init__.py
+src/iso_downloader/__main__.py
+src/iso_downloader/config.py
+src/iso_downloader/downloader.py
+src/iso_downloader/main.py
+src/iso_downloader/tui.py
+src/iso_downloader.egg-info/PKG-INFO
+src/iso_downloader.egg-info/SOURCES.txt
+src/iso_downloader.egg-info/dependency_links.txt
+src/iso_downloader.egg-info/entry_points.txt
+src/iso_downloader.egg-info/requires.txt
+src/iso_downloader.egg-info/top_level.txt
+src/iso_downloader/data/distros.toml
