@@ -39,5 +39,17 @@ jobs:
         with:
           tag_name: v${{ steps.date.outputs.date }}
           files: dist/iso-downloader
+          # Also create/update the 'latest' release and tag
+          make_latest: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+      - name: Create/Update latest tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f latest
+          git push -f origin latest
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
