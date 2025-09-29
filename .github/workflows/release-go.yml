@@ -20,41 +20,24 @@ jobs:
           name: iso-downloader-go-linux
           path: dist/iso-downloader
 
-  create-tag:
+  release:
     needs: [build-linux]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Git user
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
-      - name: Create tag
-        run: |
-          git tag v${{ steps.date.outputs.date }}
-          git push origin v${{ steps.date.outputs.date }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set tag output
-        id: tag
-        run: echo "tag=v${{ steps.date.outputs.date }}" >> $GITHUB_OUTPUT
-
-  release:
-    needs: [create-tag]
-    runs-on: ubuntu-latest
-    steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: iso-downloader-go-linux
           path: dist
-      - name: Release
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+      - name: Create tag and release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.date.outputs.date }}
           files: dist/iso-downloader
-          tag_name: ${{ needs.create-tag.outputs.tag }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
