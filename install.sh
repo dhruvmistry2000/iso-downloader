@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="${REPO:-dhruv/iso-downloader}"
+REPO="${REPO:-dhruvmistry2000/iso-downloader}"
 BIN_DIR="${BIN_DIR:-/usr/local/bin}"
 NAME="iso-downloader"
 
@@ -33,5 +33,3 @@ fi
 
 echo "Installed: $(command -v $NAME)"
 "$BIN_DIR/$NAME" --help || true
-
-
