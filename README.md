@@ -5,13 +5,13 @@ CLI/TUI tool to download Linux ISOs by distro and version.
 ### Install (one-liner)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<YOUR_GH_USERNAME>/iso-downloader/refs/heads/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/install.sh | bash
 ```
 
 Set `REPO=<owner>/<repo>` to install from your fork:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<YOUR_GH_USERNAME>/iso-downloader/refs/heads/main/install.sh | REPO=<owner>/<repo> bash
+curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/install.sh | REPO=<owner>/<repo> bash
 ```
 
 ### Usage

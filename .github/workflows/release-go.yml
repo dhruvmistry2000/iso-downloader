@@ -1,9 +1,8 @@
 name: release-go
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+
 
 jobs:
   build-linux:
