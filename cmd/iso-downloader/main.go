@@ -100,21 +100,21 @@ func promptOutputDir(distro string) (string, error) {
 
 func loadConfig() (Config, error) {
 	var cfg Config
-	path := os.Getenv("ISO_DOWNLOADER_CONFIG")
-	if path == "" {
-		// Prefer JSON in Go data path
-		primary := filepath.Join("data", "distros.json")
-		if _, err := os.Stat(primary); err == nil {
-			path = primary
-		} else {
-			return cfg, fmt.Errorf("config not found: %s", primary)
-		}
+	url := os.Getenv("ISO_DOWNLOADER_CONFIG")
+	if url == "" {
+		// Default to the JSON in the GitHub repo (main branch)
+		url = "https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/data/distros.json"
 	}
-	b, err := os.ReadFile(path)
+	resp, err := http.Get(url)
 	if err != nil {
 		return cfg, err
 	}
-	if err := json.Unmarshal(b, &cfg); err != nil {
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return cfg, fmt.Errorf("failed to fetch config: %s", resp.Status)
+	}
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&cfg); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
