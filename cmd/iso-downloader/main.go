@@ -100,21 +100,33 @@ func promptOutputDir(distro string) (string, error) {
 
 func loadConfig() (Config, error) {
 	var cfg Config
-	url := os.Getenv("ISO_DOWNLOADER_CONFIG")
-	if url == "" {
-		// Default to the JSON in the GitHub repo (main branch)
-		url = "https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/data/distros.json"
+	path := os.Getenv("ISO_DOWNLOADER_CONFIG")
+	if path == "" {
+		// Try local JSON file first
+		path = filepath.Join("data", "distros.json")
+		if _, err := os.Stat(path); err != nil {
+			// Fallback to GitHub JSON
+			url := "https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/data/distros.json"
+			resp, err := http.Get(url)
+			if err != nil {
+				return cfg, err
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				return cfg, fmt.Errorf("failed to fetch config: %s", resp.Status)
+			}
+			dec := json.NewDecoder(resp.Body)
+			if err := dec.Decode(&cfg); err != nil {
+				return cfg, err
+			}
+			return cfg, nil
+		}
 	}
-	resp, err := http.Get(url)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return cfg, err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return cfg, fmt.Errorf("failed to fetch config: %s", resp.Status)
-	}
-	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(&cfg); err != nil {
+	if err := json.Unmarshal(b, &cfg); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
