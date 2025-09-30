@@ -16,12 +16,6 @@ CLI/TUI to quickly download Linux ISOs, organized by distro family â†’ distro â†
 curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/start.sh | bash
 ```
 
-Use a different repo fork:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/start.sh | REPO=<owner>/<repo> bash
-```
-
 ### How it works
 
 - The app fetches `data/distros.json` from the repo at runtime by default.
