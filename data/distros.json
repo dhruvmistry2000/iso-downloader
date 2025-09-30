@@ -29,6 +29,14 @@
           "versions": [
             "42"
           ]
+        },
+        "ultramarine-flagship": {
+          "base_url": "https://images.fyralabs.com/isos/ultramarine",
+          "url_template": "{base_url}/{version}/ultramarine-flagship-{version}-live-anaconda-x86_64.iso",
+          "filename_template": "ultramarine-flagship-{version}-live-anaconda-x86_64.iso",
+          "versions": [
+            "41"
+          ]
         }
       }
     },
