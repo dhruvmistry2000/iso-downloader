@@ -41,6 +41,14 @@
           "versions": [
             "2025.09.01", "2025.08.01", "2025.07.01" 
           ]
+        },
+        "cachyos": {
+          "base_url": "https://cdn77.cachyos.org/ISO/desktop",
+          "url_template": "{base_url}/{version}/cachyos-desktop-linux-{version}.iso",
+          "filename_template": "cachyos-desktop-linux-{version}.iso",
+          "versions": [
+            "250828"
+          ]
         }
       }
     }
