@@ -20,12 +20,23 @@ import (
 )
 
 type Distro struct {
-	BaseURL          string   `json:"base_url"`
-	URLTemplate      string   `json:"url_template"`
-	FilenameTemplate string   `json:"filename_template"`
-	ListURLTemplate  string   `json:"list_url_template"`
-	FilenameGlob     string   `json:"filename_glob"`
-	Versions         []string `json:"versions"`
+	BaseURL          string            `json:"base_url"`
+	URLTemplate      string            `json:"url_template"`
+	FilenameTemplate string            `json:"filename_template"`
+	ListURLTemplate  string            `json:"list_url_template"`
+	FilenameGlob     string            `json:"filename_glob"`
+	Versions         []string          `json:"versions"`
+	Flavors          map[string]Flavor `json:"flavors,omitempty"`
+}
+
+// Flavor allows per-flavor overrides. Selection is not yet exposed in UI,
+// but we keep it in the schema for future use.
+type Flavor struct {
+	BaseURL          string `json:"base_url,omitempty"`
+	URLTemplate      string `json:"url_template,omitempty"`
+	FilenameTemplate string `json:"filename_template,omitempty"`
+	ListURLTemplate  string `json:"list_url_template,omitempty"`
+	FilenameGlob     string `json:"filename_glob,omitempty"`
 }
 
 type Family struct {
@@ -100,36 +111,139 @@ func promptOutputDir(distro string) (string, error) {
 
 func loadConfig() (Config, error) {
 	var cfg Config
-	path := os.Getenv("ISO_DOWNLOADER_CONFIG")
-	if path == "" {
-		// Try local JSON file first
-		path = filepath.Join("data", "distros.json")
-		if _, err := os.Stat(path); err != nil {
-			// Fallback to GitHub JSON
-			url := "https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/data/distros.json"
-			resp, err := http.Get(url)
-			if err != nil {
-				return cfg, err
-			}
-			defer resp.Body.Close()
-			if resp.StatusCode != http.StatusOK {
-				return cfg, fmt.Errorf("failed to fetch config: %s", resp.Status)
-			}
-			dec := json.NewDecoder(resp.Body)
-			if err := dec.Decode(&cfg); err != nil {
-				return cfg, err
-			}
-			return cfg, nil
-		}
+	base := os.Getenv("ISO_DOWNLOADER_CONFIG")
+	if base == "" {
+		base = "data"
 	}
-	b, err := os.ReadFile(path)
+
+	// Directory-based config? Look for family/index.json under base
+	if fi, err := os.Stat(base); err == nil && fi.IsDir() {
+		built, derr := loadConfigFromDirectory(base)
+		if derr == nil && len(built.Families) > 0 {
+			return built, nil
+		}
+		// Fall through to single-file if directory structure incomplete
+	}
+
+	// Single monolithic file
+	monoPath := base
+	// If base was a directory, default monolithic path
+	if st, err := os.Stat(base); err == nil && st.IsDir() {
+		monoPath = filepath.Join(base, "distros.json")
+	}
+	if _, err := os.Stat(monoPath); err == nil {
+		b, err := os.ReadFile(monoPath)
+		if err != nil {
+			return cfg, err
+		}
+		if err := json.Unmarshal(b, &cfg); err != nil {
+			return cfg, err
+		}
+		return cfg, nil
+	}
+
+	// Remote fallback
+	url := "https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/data/distros.json"
+	resp, err := http.Get(url)
 	if err != nil {
 		return cfg, err
 	}
-	if err := json.Unmarshal(b, &cfg); err != nil {
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return cfg, fmt.Errorf("failed to fetch config: %s", resp.Status)
+	}
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&cfg); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
+}
+
+// Directory loader: expects base/<family>/index.json and base/<family>/<distro>/<distro>.json
+func loadConfigFromDirectory(base string) (Config, error) {
+	out := Config{Families: make(map[string]Family)}
+	// enumerate families (directories under base)
+	familyEntries, err := os.ReadDir(base)
+	if err != nil {
+		return out, err
+	}
+	for _, fe := range familyEntries {
+		if !fe.IsDir() {
+			continue
+		}
+		familyName := fe.Name()
+		familyDir := filepath.Join(base, familyName)
+
+		// enumerate distros by directory name; each must contain <distro>.json
+		distroEntries, err := os.ReadDir(familyDir)
+		if err != nil {
+			return out, err
+		}
+		fam := Family{Distros: make(map[string]Distro)}
+		for _, de := range distroEntries {
+			if !de.IsDir() {
+				continue
+			}
+			dname := de.Name()
+			ddir := filepath.Join(familyDir, dname)
+			dpath := filepath.Join(ddir, dname+".json")
+			if _, err := os.Stat(dpath); err != nil {
+				// skip folders that do not follow the convention
+				continue
+			}
+			var d Distro
+			db, err := os.ReadFile(dpath)
+			if err != nil {
+				return out, fmt.Errorf("read distro %s/%s: %w", familyName, dname, err)
+			}
+			if err := json.Unmarshal(db, &d); err != nil {
+				return out, fmt.Errorf("parse distro %s/%s: %w", familyName, dname, err)
+			}
+			// Load flavours from ddir/flavours.json and per-flavour JSON files if present
+			// flavours.json schema: { "flavours": ["name1", "name2"] }
+			// Also accept "flavors" for compatibility
+			idxPath := filepath.Join(ddir, "flavours.json")
+			if _, err := os.Stat(idxPath); err != nil {
+				// try american spelling
+				idxPath = filepath.Join(ddir, "flavors.json")
+			}
+			if b, err := os.ReadFile(idxPath); err == nil {
+				var idx struct {
+					Flavours []string `json:"flavours"`
+					Flavors  []string `json:"flavors"`
+				}
+				if jerr := json.Unmarshal(b, &idx); jerr == nil {
+					names := idx.Flavours
+					if len(names) == 0 {
+						names = idx.Flavors
+					}
+					if len(names) > 0 {
+						if d.Flavors == nil {
+							d.Flavors = make(map[string]Flavor)
+						}
+						for _, fname := range names {
+							fpath := filepath.Join(ddir, fname+".json")
+							fb, rerr := os.ReadFile(fpath)
+							if rerr != nil {
+								return out, fmt.Errorf("read flavour %s/%s/%s: %w", familyName, dname, fname, rerr)
+							}
+							var f Flavor
+							if uerr := json.Unmarshal(fb, &f); uerr != nil {
+								return out, fmt.Errorf("parse flavour %s/%s/%s: %w", familyName, dname, fname, uerr)
+							}
+							d.Flavors[fname] = f
+						}
+					}
+				}
+			}
+			// If no flavours.json, keep whatever may be embedded
+			fam.Distros[dname] = d
+		}
+		if len(fam.Distros) > 0 {
+			out.Families[familyName] = fam
+		}
+	}
+	return out, nil
 }
 
 func promptSelection(cfg Config) (string, string, []string, error) {

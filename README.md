@@ -12,9 +12,13 @@ CLI/TUI to quickly download Linux ISOs, organized by distro family â†’ distro â†
 
 ### Run (no install)
 
+## LINUX
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dhruvmistry2000/iso-downloader/refs/heads/main/start.sh | bash
 ```
+
+#window
+
 
 ### How it works
 
@@ -46,6 +50,21 @@ This builds `dist/iso-downloader` and runs it.
   }
 }
 ```
+
+### Supported Distros
+
+You can currently download ISOs for the following distributions:
+
+- **Debian family**
+  - Debian
+  - Ubuntu
+- **Fedora family**
+  - Fedora
+  - Ultramarine Flagship
+  - Ultramarine GNOME
+  - Ultramarine XFCE
+- **Arch family**
+  - Arch Linux
 
 ### Contributing
 
